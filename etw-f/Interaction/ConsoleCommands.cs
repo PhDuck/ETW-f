@@ -1,10 +1,8 @@
 ﻿namespace etw_f.Interaction
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
-    using System.Linq;
+
     using Microsoft.Diagnostics.Tracing;
 
     using Capture;
@@ -35,7 +33,6 @@
                         arg.Cancel = true;
                         break;
                     case 'p':
-                        // TODO: Handle add and remove provider
                         HandleProvider(session, output, input);
                         arg.Cancel = true;
                         return;
@@ -48,7 +45,7 @@
                         session.Dispose();
                         break;
                     case 's':
-                        // TODO: SELECT : Allows to specific which columns to show.
+                        // TODO: SELECT/VIEW : Allows to specific which columns to show.
                         break;
                     default:
                         output.WriteLine($"Un-recognized key pressed {key.KeyChar}, stopping monitoring.");
