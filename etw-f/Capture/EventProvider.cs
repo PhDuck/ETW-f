@@ -126,7 +126,11 @@
 
         internal void ClearFilter(String eventName, FilterExpression fe)
         {
-            if (!this._filters.TryGetValue(eventName, out List<FilterExpression>? filters)) return;
+            if (!this._filters.TryGetValue(eventName, out List<FilterExpression>? filters))
+            {
+                return;
+            }
+
             if (filters == null)
             {
                 throw new ArgumentNullException(nameof(filters));
@@ -137,20 +141,23 @@
 
         public void HandleEvent(TraceEvent te, TextWriter output)
         {
+            if (this.ApplyFiltering(te))
+            {
+                this._displayer.Display(te, output);
+            }
+        }
+
+        private Boolean ApplyFiltering(TraceEvent te)
+        {
             if (this._filters.Count != 0 && this._filters.TryGetValue(te.EventName, out var filters))
             {
-                if (filters.Any(f => f.Evaluate(te)))
+                if (!filters.Any(f => f.Evaluate(te)))
                 {
-                    this._displayer.Display(te, output);
-                    return;
-                }
-                else
-                {
-                    return;
+                    return false;
                 }
             }
 
-            this._displayer.Display(te, output);
+            return true;
         }
 
         public override Boolean Equals(Object? obj)
