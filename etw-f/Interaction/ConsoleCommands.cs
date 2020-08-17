@@ -15,7 +15,8 @@
         {
             Console.CancelKeyPress += (sender, arg) =>
             {
-                session.TakeGate();
+                session.EnterGate();
+
                 try
                 {
                     // After pressing CTRL + C we enter into a update mode.

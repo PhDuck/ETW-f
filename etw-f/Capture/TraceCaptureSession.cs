@@ -9,6 +9,7 @@
     using Microsoft.Diagnostics.Tracing.Session;
 
     using Display;
+    using Misc;
 
     internal class TraceCaptureSession : IDisposable
     {
@@ -27,15 +28,17 @@
         /// </summary>
         private const Int32 MAX_QUEUE_SIZE = 16384;
 
-        private volatile Int32 _gate = 0;
-        private const Int32 OPEN = 0;
-        private const Int32 LOCKED = 1;
+        /// <summary>
+        /// A simple gate the can be locked or open.
+        /// </summary>
+        private readonly Gate _gate;
 
         private TraceCaptureSession(String sessionName, TextWriter writer, TextReader reader)
         {
             this._textWriter = writer;
             this._textReader = reader;
             this._session = new TraceEventSession(sessionName);
+            this._gate = new Gate();
         }
 
         public static TraceCaptureSession Create(String sessionName, TextWriter writer, TextReader reader)
@@ -135,11 +138,12 @@
 
         private void HandleDynamicEvent(TraceEvent? e)
         {
-            if (e != null && this._gate == OPEN)
+            EventProvider? ep = null;
+            if (e != null && this._gate.TestGate())
             {
                 do
                 {
-                    if (this._traceProviders.TryGetValue(e.ProviderGuid, out EventProvider? ep))
+                    if ((ep != null && ep.Guid.Equals(e.ProviderGuid)) || this._traceProviders.TryGetValue(e.ProviderGuid, out ep))
                     {
                         if (ep == null)
                         {
@@ -152,8 +156,7 @@
                     {
                         throw new ArgumentException($"No provider registered for {e.ProviderGuid}");
                     }
-                }
-                while (this._eventQueue.TryDequeue(out e));
+                } while (this._eventQueue.TryDequeue(out e));
             }
             else
             {
@@ -164,15 +167,9 @@
             }
         }
 
-        internal void TakeGate()
-        {
-            this._gate = LOCKED;
-        }
+        internal void EnterGate() => this._gate.EnterGate();
 
-        internal void ReleaseGate()
-        {
-            this._gate = OPEN;
-        }
+        internal void ReleaseGate() => this._gate.ReleaseGate();
 
         internal void Process()
         {
