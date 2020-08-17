@@ -15,42 +15,54 @@
         {
             Console.CancelKeyPress += (sender, arg) =>
             {
-                // After pressing CTRL + C we enter into a update mode.
-                output.WriteLine("Entered configuration mode, options:");
-                output.WriteLine("p: add/remove (p)roviders");
-                output.WriteLine("f: add/remove (f)ilters");
-                output.WriteLine("c: (c)ancel monitoring");
-                output.WriteLine("l: update (l)evel");
-
-                // TODO: Now that everything uses input/output specified as args, this is a bit nasty.
-                Console.SetIn(input);
-                ConsoleKeyInfo key = Console.ReadKey();
-
-                switch (key.KeyChar)
+                session.TakeGate();
+                try
                 {
-                    case 'l':
-                        HandleLevel(session, output, input);
-                        arg.Cancel = true;
-                        break;
-                    case 'p':
-                        HandleProvider(session, output, input);
-                        arg.Cancel = true;
-                        return;
-                    case 'f':
-                        HandleFilter(session, output, input);
-                        arg.Cancel = true;
-                        break;
-                    case 'c':
-                        output.WriteLine("Cancelling monitoring");
-                        session.Dispose();
-                        break;
-                    case 's':
-                        // TODO: SELECT/VIEW : Allows to specific which columns to show.
-                        break;
-                    default:
-                        output.WriteLine($"Un-recognized key pressed {key.KeyChar}, stopping monitoring.");
-                        session.Dispose();
-                        break;
+                    // After pressing CTRL + C we enter into a update mode.
+                    output.WriteLine("Entered configuration mode, options:");
+                    output.WriteLine("p: add/remove (p)roviders");
+                    output.WriteLine("f: add/remove (f)ilters");
+                    output.WriteLine("c: (c)ancel monitoring");
+                    output.WriteLine("l: update (l)evel");
+                    output.WriteLine("r: (r)eturn to monitoring");
+
+                    // TODO: Now that everything uses input/output specified as args, this is a bit nasty.
+                    Console.SetIn(input);
+                    ConsoleKeyInfo key = Console.ReadKey();
+
+                    switch (key.KeyChar)
+                    {
+                        case 'l':
+                            HandleLevel(session, output, input);
+                            arg.Cancel = true;
+                            break;
+                        case 'p':
+                            HandleProvider(session, output, input);
+                            arg.Cancel = true;
+                            return;
+                        case 'f':
+                            HandleFilter(session, output, input);
+                            arg.Cancel = true;
+                            break;
+                        case 'c':
+                            output.WriteLine("Cancelling monitoring");
+                            session.Dispose();
+                            break;
+                        case 's':
+                            // TODO: SELECT/VIEW : Allows to specific which columns to show.
+                            break;
+                        case 'r':
+                            arg.Cancel = true;
+                            break;
+                        default:
+                            output.WriteLine($"Un-recognized key pressed {key.KeyChar}, stopping monitoring.");
+                            session.Dispose();
+                            break;
+                    }
+                }
+                finally
+                {
+                    session.ReleaseGate();
                 }
             };
         }

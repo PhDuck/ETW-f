@@ -5,6 +5,7 @@
     using System.IO;
     using System.Linq;
 
+    using Microsoft.Diagnostics.Tracing;
     using Microsoft.Diagnostics.Tracing.Session;
 
     using Display;
@@ -15,6 +16,20 @@
         private readonly TextReader _textReader;
         private readonly TraceEventSession _session;
         private readonly Dictionary<Guid, EventProvider> _traceProviders = new Dictionary<Guid, EventProvider>();
+
+        /// <summary>
+        /// Events that are queued for later consumption.
+        /// </summary>
+        private readonly Queue<TraceEvent> _eventQueue = new Queue<TraceEvent>();
+
+        /// <summary>
+        /// The limit as to how many events are queued, if more they are dropped.
+        /// </summary>
+        private const Int32 MAX_QUEUE_SIZE = 16384;
+
+        private volatile Int32 _gate = 0;
+        private const Int32 OPEN = 0;
+        private const Int32 LOCKED = 1;
 
         private TraceCaptureSession(String sessionName, TextWriter writer, TextReader reader)
         {
@@ -115,22 +130,48 @@
         internal void AddCallback()
         {
             TraceEventSchema.WriteHeaders(this._textWriter);
-            this._session.Source.Dynamic.All += (e) =>
-            {
-                if (this._traceProviders.TryGetValue(e.ProviderGuid, out EventProvider? ep))
-                {
-                    if (ep == null)
-                    {
-                        throw new ArgumentNullException(nameof(ep));
-                    }
+            this._session.Source.Dynamic.All += this.HandleDynamicEvent;
+        }
 
-                    ep.HandleEvent(e, this._textWriter);
-                }
-                else
+        private void HandleDynamicEvent(TraceEvent? e)
+        {
+            if (e != null && this._gate == OPEN)
+            {
+                do
                 {
-                    throw new ArgumentException($"No provider registered for {e.ProviderGuid}");
+                    if (this._traceProviders.TryGetValue(e.ProviderGuid, out EventProvider? ep))
+                    {
+                        if (ep == null)
+                        {
+                            throw new ArgumentNullException(nameof(ep));
+                        }
+
+                        ep.HandleEvent(e, this._textWriter);
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"No provider registered for {e.ProviderGuid}");
+                    }
                 }
-            };
+                while (this._eventQueue.TryDequeue(out e));
+            }
+            else
+            {
+                if (this._eventQueue.Count < MAX_QUEUE_SIZE && e != null)
+                {
+                    this._eventQueue.Enqueue(e);
+                }
+            }
+        }
+
+        internal void TakeGate()
+        {
+            this._gate = LOCKED;
+        }
+
+        internal void ReleaseGate()
+        {
+            this._gate = OPEN;
         }
 
         internal void Process()
