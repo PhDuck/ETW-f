@@ -139,6 +139,12 @@
         private void HandleDynamicEvent(TraceEvent? e)
         {
             EventProvider? ep = null;
+
+            // The gate might be taken while we are handling events. This is okay since it would essentially finish immediately.
+            // For cases where it is running through queue, it would mean you paused the handling,
+            // then began handling and immediately enter config mode again.
+            // If this becomes a real problem, we can always check the gate at each iteration.
+            // But that might be a problem if no other events if event callbacks are synchronous.
             if (e != null && this._gate.TestGate())
             {
                 do

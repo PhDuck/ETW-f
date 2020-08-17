@@ -10,7 +10,7 @@ namespace etw_f
     static class Program
     {
         private const String DefaultSessionName = "ETW-f";
-        
+
         static void Main(String[] args)
         {
             using (var session = TraceCaptureSession.Create(DefaultSessionName, Console.Out, Console.In))
