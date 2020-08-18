@@ -11,7 +11,7 @@
     using Display;
     using Filtering;
 
-    internal class EventProvider : IEquatable<EventProvider>
+    internal class EventProvider : IDisposable, IEquatable<EventProvider>
     {
         public readonly Guid Guid;
         public readonly String Name;
@@ -184,6 +184,13 @@
             }
 
             return String.Concat(this.Name, " ", guidString);
+        }
+
+        internal Boolean Disposed = false;
+
+        public void Dispose()
+        {
+            this.Disposed = true;
         }
     }
 }

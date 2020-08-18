@@ -139,6 +139,7 @@
             if (innerResult && eventProvider != null)
             {
                 session.DisableProvider(eventProvider);
+                eventProvider.Dispose();
             }
             else
             {

@@ -149,18 +149,21 @@
             {
                 do
                 {
-                    if ((ep != null && ep.Guid.Equals(e.ProviderGuid)) || this._traceProviders.TryGetValue(e.ProviderGuid, out ep))
+                    if ((ep != null && !ep.Disposed && ep.Guid.Equals(e.ProviderGuid)) || // Don't load out from dict if event is for same provider.
+                        this._traceProviders.TryGetValue(e.ProviderGuid, out ep))
                     {
                         if (ep == null)
                         {
                             throw new ArgumentNullException(nameof(ep));
                         }
 
+                        if (e.Level > ep.TraceEventLevel)
+                        {
+                            // Queue events might have an old trace level, verify again.
+                            continue;
+                        }
+
                         ep.HandleEvent(e, this._textWriter);
-                    }
-                    else
-                    {
-                        throw new ArgumentException($"No provider registered for {e.ProviderGuid}");
                     }
                 } while (this._eventQueue.TryDequeue(out e));
             }
