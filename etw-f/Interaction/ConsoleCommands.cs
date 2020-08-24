@@ -1,13 +1,17 @@
 ﻿namespace etw_f.Interaction
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
-
+    using System.Linq;
+    using System.Runtime.CompilerServices;
     using Microsoft.Diagnostics.Tracing;
 
     using Capture;
     using Display;
     using Filtering;
+    using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
+    using View;
 
     internal static class ConsoleCommands
     {
@@ -23,8 +27,9 @@
                     output.WriteLine("Entered configuration mode, options:");
                     output.WriteLine("p: add/remove (p)roviders");
                     output.WriteLine("f: add/remove (f)ilters");
-                    output.WriteLine("c: (c)ancel monitoring");
+                    output.WriteLine("s: select payload fields");
                     output.WriteLine("l: update (l)evel");
+                    output.WriteLine("c: (c)ancel monitoring");
                     output.WriteLine("r: (r)eturn to monitoring");
 
                     // TODO: Now that everything uses input/output specified as args, this is a bit nasty.
@@ -50,7 +55,8 @@
                             session.Dispose();
                             break;
                         case 's':
-                            // TODO: SELECT/VIEW : Allows to specific which columns to show.
+                            HandleSelection(session, output, input);
+                            arg.Cancel = true;
                             break;
                         case 'r':
                             arg.Cancel = true;
@@ -66,6 +72,22 @@
                     session.ReleaseGate();
                 }
             };
+        }
+
+        private static void HandleSelection(TraceCaptureSession session, TextWriter writer, TextReader reader)
+        {
+            EventProvider providers = GetProvider(session, writer, reader) ?? throw new ArgumentNullException(nameof(GetProvider));
+            // Get event id
+            writer.WriteLine("Specify event name");
+            String eventName = reader.ReadLine() ?? throw new ArgumentNullException(nameof(eventName));
+
+            writer.WriteLine("Specify payload fields to display in csv format");
+            String payLoadFields = reader.ReadLine() ?? throw new ArgumentNullException(nameof(payLoadFields));
+
+            String[] fields = payLoadFields.Split(',').Select(f => f.Trim()).ToArray();
+
+            // TODO: Implement event level operations on a event provider.
+            providers.AddOrUpdateView(eventName, fields);
         }
 
         private static void HandleLevel(TraceCaptureSession session, TextWriter writer, TextReader reader)

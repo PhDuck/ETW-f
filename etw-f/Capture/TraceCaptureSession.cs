@@ -157,7 +157,7 @@
                             throw new ArgumentNullException(nameof(ep));
                         }
 
-                        if (e.Level > ep.TraceEventLevel)
+                        if (ep.TraceEventLevel > e.Level)
                         {
                             // Queue events might have an old trace level, verify again.
                             continue;
@@ -169,10 +169,15 @@
             }
             else
             {
-                if (this._eventQueue.Count < MAX_QUEUE_SIZE && e != null)
+                if (this._eventQueue.Count >= MAX_QUEUE_SIZE || e == null)
                 {
-                    this._eventQueue.Enqueue(e);
+                    return;
                 }
+
+                // Clone is necessary since the same event is re-used, else we would just keep points to same object.
+                TraceEvent te = e.Clone();
+
+                this._eventQueue.Enqueue(te);
             }
         }
 

@@ -21,7 +21,7 @@
             writer.WriteLine(HeaderFormatString, DefaultHeaders);
         }
 
-        internal static void AppendHeaders(StringBuilder sb, TraceEvent te)
+        internal static void AppendHeaderValues(StringBuilder sb, TraceEvent te)
         {
             sb.AppendFormat(HeaderFormatString, te.TimeStamp.ToUniversalTime(), te.ProviderName, te.EventName, "");
         }

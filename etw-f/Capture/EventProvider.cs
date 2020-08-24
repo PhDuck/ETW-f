@@ -10,6 +10,7 @@
 
     using Display;
     using Filtering;
+    using View;
 
     internal class EventProvider : IDisposable, IEquatable<EventProvider>
     {
@@ -19,6 +20,7 @@
         internal readonly TraceEventLevel TraceEventLevel;
 
         private readonly Dictionary<String, List<FilterExpression>> _filters;
+        private readonly Dictionary<String, PayloadFilteredView> _views;
 
         private EventProvider(Guid guid, TraceEventLevel traceEventLevel, TraceDisplayer displayer)
         {
@@ -27,6 +29,7 @@
             this._filters = new Dictionary<String, List<FilterExpression>>();
             this.TraceEventLevel = traceEventLevel;
             this.Name = TraceEventProviders.GetProviderName(guid);
+            this._views = new Dictionary<String, PayloadFilteredView>();
         }
 
         public static EventProvider Create(Guid g, TraceEventLevel traceEventLevel, TraceDisplayer traceDisplayer)
@@ -139,11 +142,31 @@
             ClearFilter(filters, fe);
         }
 
+        internal void AddOrUpdateView(String eventName, String[] fields)
+        {
+            var view = new PayloadFilteredView(fields);
+
+            if (this._views.TryAdd(eventName, view))
+            {
+                return;
+            }
+
+            if (fields.Length == 0)
+            {
+                this._views.Remove(eventName);
+            }
+            else
+            {
+                this._views[eventName] = view;
+            }
+        }
+
         public void HandleEvent(TraceEvent te, TextWriter output)
         {
             if (this.ApplyFiltering(te))
             {
-                this._displayer.Display(te, output);
+                this._views.TryGetValue(te.EventName, out PayloadFilteredView? view);
+                this._displayer.Display(te, view, output);
             }
         }
 
@@ -159,6 +182,8 @@
 
             return true;
         }
+
+        #region Interface Implementations
 
         public override Boolean Equals(Object? obj)
         {
@@ -192,5 +217,7 @@
         {
             this.Disposed = true;
         }
+
+        #endregion
     }
 }
