@@ -108,7 +108,19 @@
             }
         }
 
-        internal void AddOrUpdateFilter(String eventName, FilterExpression fe)
+        internal void SetFilter(string eventName, FilterExpression fe)
+        {
+            if (fe.IsClear)
+            {
+                this.ClearFilter(eventName, fe);
+            }
+            else
+            {
+                this.AddOrUpdateFilter(eventName, fe);
+            }
+        }
+
+        private void AddOrUpdateFilter(String eventName, FilterExpression fe)
         {
             if (this._filters.TryGetValue(eventName, out List<FilterExpression>? fes))
             {
@@ -127,7 +139,7 @@
             }
         }
 
-        internal void ClearFilter(String eventName, FilterExpression fe)
+        private void ClearFilter(String eventName, FilterExpression fe)
         {
             if (!this._filters.TryGetValue(eventName, out List<FilterExpression>? filters))
             {
@@ -142,7 +154,7 @@
             ClearFilter(filters, fe);
         }
 
-        internal void AddOrUpdateView(String eventName, String[] fields)
+        internal void AddOrUpdateView(String eventName, IReadOnlyList<string> fields)
         {
             var view = new PayloadFilteredView(fields);
 
@@ -151,7 +163,7 @@
                 return;
             }
 
-            if (fields.Length == 0)
+            if (fields.Count == 0)
             {
                 this._views.Remove(eventName);
             }

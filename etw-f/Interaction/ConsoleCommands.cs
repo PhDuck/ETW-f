@@ -1,17 +1,13 @@
 ﻿namespace etw_f.Interaction
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Runtime.CompilerServices;
     using Microsoft.Diagnostics.Tracing;
 
     using Capture;
     using Display;
     using Filtering;
-    using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
-    using View;
 
     internal static class ConsoleCommands
     {
@@ -29,7 +25,7 @@
                     output.WriteLine("f: add/remove (f)ilters");
                     output.WriteLine("s: select payload fields");
                     output.WriteLine("l: update (l)evel");
-                    output.WriteLine("c: (c)ancel monitoring");
+                    output.WriteLine("x: cancel monitoring");
                     output.WriteLine("r: (r)eturn to monitoring");
 
                     // TODO: Now that everything uses input/output specified as args, this is a bit nasty.
@@ -50,7 +46,7 @@
                             HandleFilter(session, output, input);
                             arg.Cancel = true;
                             break;
-                        case 'c':
+                        case 'x':
                             output.WriteLine("Cancelling monitoring");
                             session.Dispose();
                             break;
@@ -192,14 +188,7 @@
 
             var fe = new PayloadFieldBoundFilterExpression(filter, fieldName);
 
-            if (filter.Length == 0)
-            {
-                eventProvider.ClearFilter(eventName, fe);
-            }
-            else
-            {
-                eventProvider.AddOrUpdateFilter(eventName, fe);
-            }
+            eventProvider.SetFilter(eventName, fe);
         }
 
         private static EventProvider GetProvider(TraceCaptureSession session, TextWriter output, TextReader input)

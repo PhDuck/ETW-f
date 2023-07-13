@@ -8,7 +8,7 @@
 
     internal static class TraceEventSchema
     {
-        private const String HeaderFormatString = "{0,-25:u}{1,-25}{2,-20}{3,-0}";
+        private const String HeaderFormatString = "{0,-25:u}{1,-25} {2,-20}{3,-0}";
         private static readonly String[] DefaultHeaders = { "Timestamp", "Provider", "Event Name", "Payload" };
         
         /// <summary>

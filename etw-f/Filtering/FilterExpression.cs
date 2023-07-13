@@ -19,6 +19,8 @@
             this._regex = new Regex(pattern, RegexOptions.Compiled);
         }
 
+        internal bool IsClear => this.pattern.Length == 0;
+
         internal static FilterExpression Create(String filter)
         {
             return new FilterExpression(filter, FilterType.Wildcard);

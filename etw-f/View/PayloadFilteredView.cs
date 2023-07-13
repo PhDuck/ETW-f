@@ -7,11 +7,11 @@
     internal class PayloadFilteredView : IEquatable<PayloadFilteredView>
     {
         // DEVNOTE: If need be, change this to HashSet
-        private readonly String[] _fields;
+        private readonly IReadOnlyList<string> _fields;
 
         internal IReadOnlyList<String> Fields => this._fields;
 
-        internal PayloadFilteredView(String[] fields)
+        internal PayloadFilteredView(IReadOnlyList<string> fields)
         {
             this._fields = fields;
         }
@@ -26,7 +26,7 @@
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return this._fields.Length == other._fields.Length && this._fields.SequenceEqual(other._fields);
+            return this._fields.Count == other._fields.Count && this._fields.SequenceEqual(other._fields);
         }
 
         public override Boolean Equals(object? obj)
